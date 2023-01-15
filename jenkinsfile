@@ -2,10 +2,51 @@ pipeline {
     agent any
 
     stages {
-        stage('Hello') {
+        stage('Build') {
             steps {
-                echo 'Hello World from github using a test branch'
+                echo 'Building...'
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Testing...'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying...'
             }
         }
     }
+
+    post {
+        success {
+            echo 'Build and Deployment successful!'
+            // Use the Github Checks API to update the status of the check
+            step([$class: 'GithubCommitStatusSetter',
+                  contextSource: [$class: 'ConstantContextSource', name: 'Jenkins'],
+                  commitShaSource: [$class: 'GitParameterContextSource', parameterName: 'sha'],
+                  statusResultSource: [$class: 'AlwaysSuccessfulResultSource'],
+                  statusContextSource: [$class: 'ConstantContextSource', name: 'checks'],
+                  descriptionSource: [$class: 'ConstantDescriptionSource', text: 'Build successful']
+            ])
+        }
+        failure {
+            echo 'Build and Deployment failed.'
+            // Use the Github Checks API to update the status of the check
+            step([$class: 'GithubCommitStatusSetter',
+                  contextSource: [$class: 'ConstantContextSource', name: 'Jenkins'],
+                  commitShaSource: [$class: 'GitParameterContextSource', parameterName: 'sha'],
+                  statusResultSource: [$class: 'AlwaysFailedResultSource'],
+                  statusContextSource: [$class: 'ConstantContextSource', name: 'checks'],
+                  descriptionSource: [$class: 'ConstantDescriptionSource', text: 'Build failed']
+            ])
+        }
+    }
 }
+
+/* This example is using the Jenkins GitHub plugin, which provides a step GithubCommitStatusSetter to set the status of a GitHub check. You will also need to configure Jenkins with your GitHub repository and set up a webhook in your repository to trigger the Jenkins job when changes are pushed.
+
+You can set different contextSource, commitShaSource, statusResultSource, statusContextSource, descriptionSource to match your need.
+
+Note that this is just one way to implement GitHub checks API in Jenkinsfile and it can vary depending on your specific requirements and the plugins you have installed on your Jenkins instance. */
