@@ -1,11 +1,23 @@
 pipeline {
     agent any
+    
+    ChecksDetails details = new ChecksDetailsBuilder()
+        .withName("Jenkins CI")
+        .withStatus(ChecksStatus.COMPLETED)
+        .withConclusion(ChecksConclusion.SUCCESS)
+        .withDetailsURL(DisplayURLProvider.get().getRunURL(run))
+        .withCompletedAt(LocalDateTime.now(ZoneOffset.UTC))
+        .build();
 
     stages {
-        stage('Hello') {
+        stage('Hello with checks details') {
             steps {
                 echo 'Hello World from github'
             }
         }
     }
+    
+    ChecksPublisher publisher = ChecksPublisherFactory.fromRun(run);
+    publisher.publish(details);
+    
 }
